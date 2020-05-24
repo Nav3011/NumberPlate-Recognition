@@ -30,8 +30,10 @@ def calculate_histogram(img):
 
 
 def segmentation():
-	finalV = list()
-	finalH = list()
+	finalV_start = list()
+	finalV_end = list()
+	finalH_start = list()
+	finalH_end = list()
 	vertical_thresh = 5
 	horizontal_thresh = 5
 	for i in range(len(vertical)):
@@ -39,16 +41,17 @@ def segmentation():
 			segmentsV.append(i)
 	for i in range(1,len(segmentsV)):
 		if segmentsV[i] - segmentsV[i-1] > 1:
-			finalV.append(segmentsV[i])
+			finalV_start.append(segmentsV[i-1])
+			finalV_end.append(segmentsV[i])
 
 	for i in range(len(horizontal)):
 		if horizontal[i] < horizontal_thresh:
 			segmentsH.append(i)
 	for i in range(1,len(segmentsH)):
 		if segmentsH[i] - segmentsH[i-1] > 1:
-			finalH.append(segmentsH[i])
-
-	return finalH, finalV
+			finalH_start.append(segmentsH[i-1])
+			finalH_end.append(segmentsH[i])
+	return finalH_start, finalV_end
 
 refPt = []
 cropping  = False
@@ -64,7 +67,7 @@ def click_and_crop(event, x, y, flags, param):
 		cv2.rectangle(numberPlate, refPt[0], refPt[1], (0, 255, 0), 2)
 		cv2.imshow("detector", numberPlate)
 
-numberPlate = cv2.imread('NP_img.jpg',0)		
+numberPlate = cv2.imread('NP_img.jpg',1)		
 clone = numberPlate.copy()
 cv2.namedWindow('detector')
 cv2.setMouseCallback("detector", click_and_crop)
@@ -82,8 +85,6 @@ if len(refPt) == 2:
 	cv2.imshow("Thresh", thresh1)
 	calculate_histogram(thresh1)
 	H_lines, V_lines = segmentation()
-	print(H_lines)
-	print(V_lines)
 	for i in range(len(V_lines)):
 		image = cv2.line(roi, (V_lines[i],0), (V_lines[i], roi.shape[0]), (0,255,0), 1)
 	for i in range(len(H_lines)):
