@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 horizontal = list()
 vertical = list()
-segments = list()
+segmentsV = list()
+segmentsH = list()
 
 def calculate_histogram(img):
 	
@@ -14,10 +15,9 @@ def calculate_histogram(img):
 			if img[i][j]==0:
 				hist = hist + 1
 		horizontal.append(hist)
-		# vertical.append(histv)
 	# print(horizontal)
 	for i in range(img.shape[1]):
-		hist = 0
+		hist = 0 
 		for j in range(img.shape[0]):
 			if img[j][i]==0:
 				hist = hist + 1
@@ -30,10 +30,25 @@ def calculate_histogram(img):
 
 
 def segmentation():
+	finalV = list()
+	finalH = list()
 	vertical_thresh = 5
+	horizontal_thresh = 5
 	for i in range(len(vertical)):
 		if vertical[i] < vertical_thresh:
-			segments.append(i)
+			segmentsV.append(i)
+	for i in range(1,len(segmentsV)):
+		if segmentsV[i] - segmentsV[i-1] > 1:
+			finalV.append(segmentsV[i])
+
+	for i in range(len(horizontal)):
+		if horizontal[i] < horizontal_thresh:
+			segmentsH.append(i)
+	for i in range(1,len(segmentsH)):
+		if segmentsH[i] - segmentsH[i-1] > 1:
+			finalH.append(segmentsH[i])
+
+	return finalH, finalV
 
 refPt = []
 cropping  = False
@@ -66,9 +81,13 @@ if len(refPt) == 2:
 	ret, thresh1 = cv2.threshold(roi,127,255,cv2.THRESH_BINARY)
 	cv2.imshow("Thresh", thresh1)
 	calculate_histogram(thresh1)
-	segmentation()
-	for i in range(len(segments)):
-		image = cv2.line(roi, (segments[i],0), (segments[i], roi.shape[0]), (0,255,0), 1)
+	H_lines, V_lines = segmentation()
+	print(H_lines)
+	print(V_lines)
+	for i in range(len(V_lines)):
+		image = cv2.line(roi, (V_lines[i],0), (V_lines[i], roi.shape[0]), (0,255,0), 1)
+	for i in range(len(H_lines)):
+		image = cv2.line(roi, (0,H_lines[i]), (roi.shape[1], H_lines[i]), (0,255,0), 1)
 	cv2.imshow("final", image)
 	cv2.waitKey(0)
 cv2.destroyAllWindows()
