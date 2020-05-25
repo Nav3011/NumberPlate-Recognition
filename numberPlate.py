@@ -6,6 +6,7 @@ horizontal = list()
 vertical = list()
 segmentsV = list()
 segmentsH = list()
+final_v_segments = list()
 
 def calculate_histogram(img):
 	
@@ -34,8 +35,10 @@ def segmentation():
 	finalV_end = list()
 	finalH_start = list()
 	finalH_end = list()
-	vertical_thresh = 5
+
+	vertical_thresh = 3
 	horizontal_thresh = 5
+
 	for i in range(len(vertical)):
 		if vertical[i] < vertical_thresh:
 			segmentsV.append(i)
@@ -43,6 +46,14 @@ def segmentation():
 		if segmentsV[i] - segmentsV[i-1] > 1:
 			finalV_start.append(segmentsV[i-1])
 			finalV_end.append(segmentsV[i])
+	finalV_start[0] = 0
+	finalV_end[len(finalV_end)-1]=roi.shape[1]
+	final_v_segments.append(finalV_start[0])
+	for i in range(1,len(finalV_start)):
+		final_v_segments.append(round((finalV_start[i]+finalV_end[i-1])/2))
+	final_v_segments.append(finalV_end[len(finalV_end)-1])
+	print(final_v_segments)
+
 
 	for i in range(len(horizontal)):
 		if horizontal[i] < horizontal_thresh:
@@ -51,7 +62,9 @@ def segmentation():
 		if segmentsH[i] - segmentsH[i-1] > 1:
 			finalH_start.append(segmentsH[i-1])
 			finalH_end.append(segmentsH[i])
-	return finalH_start, finalV_end
+
+	# return finalV_start, finalV_end, finalH_start, finalH_end
+	return final_v_segments
 
 refPt = []
 cropping  = False
@@ -81,14 +94,25 @@ while True:
 
 if len(refPt) == 2:
 	roi = clone[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
-	ret, thresh1 = cv2.threshold(roi,127,255,cv2.THRESH_BINARY)
+	gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+	ret, thresh1 = cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
 	cv2.imshow("Thresh", thresh1)
+	cv2.imwrite("thresh_plate.jpg", thresh1)
 	calculate_histogram(thresh1)
-	H_lines, V_lines = segmentation()
-	for i in range(len(V_lines)):
-		image = cv2.line(roi, (V_lines[i],0), (V_lines[i], roi.shape[0]), (0,255,0), 1)
-	for i in range(len(H_lines)):
-		image = cv2.line(roi, (0,H_lines[i]), (roi.shape[1], H_lines[i]), (0,255,0), 1)
+	seg = segmentation()
+	# for i in range(len(V_lines_start)):
+	# 	image = cv2.line(roi, (V_lines_start[i],0), (V_lines_start[i], roi.shape[0]), (0,255,0), 2)
+	# for i in range(len(V_lines_end)):
+	# 	image = cv2.line(roi, (V_lines_end[i],0), (V_lines_end[i], roi.shape[0]), (0,0,255), 2)
+	for i in range(len(seg)):
+		image = cv2.line(roi, (seg[i],0), (seg[i], roi.shape[0]), (0,255,0), 2)
+	# for i in range(len(H_lines_start)):
+	# 	image = cv2.line(roi, (0,H_lines_start[i]), (roi.shape[1], H_lines_start[i]), (0,255,0), 2)
+	# for i in range(len(H_lines_end)):
+	# 	image = cv2.line(roi, (0,H_lines_end[i]), (roi.shape[1], H_lines_end[i]), (0,0,255), 2)
+	# for i in range(len(H_lines)):
+	# 	image = cv2.line(roi, (0,H_lines[i]), (roi.shape[1], H_lines[i]), (0,255,0), 1)
+
 	cv2.imshow("final", image)
 	cv2.waitKey(0)
 cv2.destroyAllWindows()
